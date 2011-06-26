@@ -1,2 +1,16 @@
 PopcornAnywhere is a video streaming daemon meant to allow
 users to view media content anywhere in the world.
+
+TODO:
+* Video streaming
+* Sorting into folders
+* Adding labels
+* User management
+* Hooks for plugins
+* Skinning
+
+Plugins:
+* Movie Integration
+  * Parsing filenames for movie name
+  * Banners, trailers, etc. for movie page
+  * Integration with IMDb and Rotten Tomatoes
