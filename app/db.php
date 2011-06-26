@@ -153,6 +153,7 @@ class paDatabase
          * Check for existing connection first.
          * If so, close it then continue.
          */
+        global $paHooks;
         if(is_resource($this->conn)) {
             $this->close();
         } $this->log->log(MAIN_Logger::INFO, 'paDatabase::connect',
@@ -162,7 +163,8 @@ class paDatabase
         if(!function_exists($this->functions["connect"])) {
             throw new paDatabaseError(paDatabaseError::ERROR, 'paDatabase::connect', 'Connection function does not exist.', $this->log);
         }
-
+        
+        $paHooks->call('db_preconnect', $this->conndata, $this->dbname);
         $retval = call_user_func_array($this->functions["connect"], $this->conndata);
 
         // See if connection is valid.
@@ -183,7 +185,8 @@ class paDatabase
         if(!$retval) {
             throw new paDatabaseError(paDatabaseError::ERROR, 'paDatabase::connect', 'Database selection failed (it may not exist).', $this->log);
         }
-
+        $paHooks->call('db_postconnect', $retval);
+        
         // Get list of tables and load into object.
         $res = $this->query("SHOW TABLES FROM {$this->dbname}");
 
@@ -194,7 +197,7 @@ class paDatabase
         $list = array();
         while($row = $this->result($res)) {
             $list[$row[0]] = false;
-        } $this->tables = $list;
+        } $this->tables = $paHooks->call('db_tablelist', $list);
 
         return true;
     }
@@ -233,6 +236,7 @@ class paDatabase
                              resource for SELECT queries.
      */
     public function query($sql) {
+        global $paHooks;
         $curtime = gmdate('c');
         $sql = "/* Time: $curtime */ /* DB: {$this->dbname} */ " . $sql;
 
@@ -248,8 +252,12 @@ class paDatabase
             throw new paDatabaseError(paDatabaseError::ERROR, 'paDatabase::query', 'Query function does not exist.', $this->log);
         }
 
-        $retval = call_user_func($this->functions["query"], $sql, $this->conn);
-
+        if($paHooks->call('db_query', $sql)) {
+            $retval = call_user_func($this->functions["query"], $sql, $this->conn);
+        } else {
+            throw new paDatabaseError(paDatabaseError::NOTICE, 'paDatabase::query', 'Query cancelled by hook.', $this->log);
+        }
+        
         return $retval;
     }
 
@@ -287,6 +295,7 @@ class paDatabase
      * @return bool|string Returns the escaped string, or false on failure.
      */
     public function escape($string) {
+        global $paHooks;
         // Check for a connection first.
         if(!is_resource($this->conn)) {
             throw new paUserError(paUserError::WARNING, 'paDatabase::escape', 'Database not connected yet.', $this->log);
@@ -297,6 +306,7 @@ class paDatabase
             throw new paDatabaseError(paDatabaseError::ERROR, 'paDatabase::escape', 'Escape function does not exist.', $this->log);
         }
 
+        $paHooks->call('db_escape', $string);
         return call_user_func($this->functions["escape"], $string);
     }
 
@@ -771,13 +781,18 @@ class paObject
      * @return bool True if the password is correct, false otherwise
      */
     public function checkPassword($new) {
+        global $paHooks;
         if(!$this->protect || !self::$enableprotect) {
             return true;
         }
 
         // Compare the password to the original hash
         // check if: h(original) == h(given)
-        return $this->info['password'] == self::hashPassword($new);
+        $hash = self::hashPassword($new)
+        $paHooks->call('obj_passwordentry', $hash);
+        $match = $this->info['password'] == $hash;
+        $retval = $match || $paHooks->call('obj_passwordcheck', $this, $match);
+        return $retval
     }
 
     /**
@@ -788,12 +803,14 @@ class paObject
      * @return bool True on success, false on failure.
      */
     public function changePassword($new) {
+        global $wgHooks;
         if(!$this->protect || !self::$enableprotect) {
             return true;
         }
 
         # FIXME: Use a salt.
         $password = self::hashPassword($new);
+        $paHooks->call('obj_passwordchange', $this, $password);
         $this->info['password'] = $password;
         return $this->updateToDatabase();
     }

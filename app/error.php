@@ -42,132 +42,132 @@ if(!defined("API")) { return false; }
 class paLogger
 {
 
-	/**
-	 * Signal for extremely dangerous errors, usually
-	 * resulting in termination of the script.
-	 */
-	const ERROR    = 256;
+    /**
+     * Signal for extremely dangerous errors, usually
+     * resulting in termination of the script.
+     */
+    const ERROR    = 256;
 
-	/**
-	 * Signal for critical errors, creating unwanted results, though
-	 * not necessarily requiring the script to be terminated.
-	 */
-	const WARNING  = 512;
+    /**
+     * Signal for critical errors, creating unwanted results, though
+     * not necessarily requiring the script to be terminated.
+     */
+    const WARNING  = 512;
 
-	/**
-	 * Signal for standard errors that may have an effect on the outcome
-	 * of the script in certain situations.
-	 */
-	const NOTICE   = 1024;
+    /**
+     * Signal for standard errors that may have an effect on the outcome
+     * of the script in certain situations.
+     */
+    const NOTICE   = 1024;
 
-	/**
-	 * Signal for important logging messages that are not errors, but denote
-	 * important points in the script's execution.
-	 */
-	const INFO     = -1;
+    /**
+     * Signal for important logging messages that are not errors, but denote
+     * important points in the script's execution.
+     */
+    const INFO     = -1;
 
-	/**
-	 * Signal for possibly important logging messages that will only be needed
-	 * as a source for developers to debug if there is a problem.
-	 */
-	const DEBUG    = -2;
+    /**
+     * Signal for possibly important logging messages that will only be needed
+     * as a source for developers to debug if there is a problem.
+     */
+    const DEBUG    = -2;
 
-	/**
-	 * Signal for any expected errors or messages caused by the user, such as
-	 * keyboard interrupts, etc.
-	 */
-	const USER     = -3;
+    /**
+     * Signal for any expected errors or messages caused by the user, such as
+     * keyboard interrupts, etc.
+     */
+    const USER     = -3;
 
-	/**
-	 * Stores the log itself, with a line for each array key.
-	 * @private
-	 */
-	private $log = array();
+    /**
+     * Stores the log itself, with a line for each array key.
+     * @private
+     */
+    private $log = array();
 
-	/**
-	 * Creates a logging message from the given parameters and
-	 * adds it to the log.
-	 *
-	 * @param int    $level    Level of the message (see the class's constants)
-	 * @param string $callback Some identifier of what function caused the message to be logged
-	 * @param string $message  The actual message to be logged
-	 *
-	 * @return bool Returns true on success, false on failure
-	 */
-	public function log($level, $callback, $message) {
-		// First get a string with the level.
-		switch($level) {
-			case self::ERROR:
-				$level = 'ERROR';
-				break;
-			case self::WARNING:
-				$level = 'WARNING';
-				break;
-			case self::NOTICE:
-				$level = 'NOTICE';
-				break;
-			case self::INFO:
-				$level = 'INFO';
-				break;
-			case self::DEBUG:
-				$level = 'DEBUG';
-				break;
-			case self::USER:
-				$level = 'USER ERROR';
-				break;
-			default:
-				return false;
-		}
+    /**
+     * Creates a logging message from the given parameters and
+     * adds it to the log.
+     *
+     * @param int    $level    Level of the message (see the class's constants)
+     * @param string $callback Some identifier of what function caused the message to be logged
+     * @param string $message  The actual message to be logged
+     *
+     * @return bool Returns true on success, false on failure
+     */
+    public function log($level, $callback, $message) {
+        // First get a string with the level.
+        switch($level) {
+            case self::ERROR:
+                $level = 'ERROR';
+                break;
+            case self::WARNING:
+                $level = 'WARNING';
+                break;
+            case self::NOTICE:
+                $level = 'NOTICE';
+                break;
+            case self::INFO:
+                $level = 'INFO';
+                break;
+            case self::DEBUG:
+                $level = 'DEBUG';
+                break;
+            case self::USER:
+                $level = 'USER ERROR';
+                break;
+            default:
+                return false;
+        }
 
-		// Retrieve any other variables necessary.
-		$time = gmdate('c');
-		$pid  = getmypid();
-		$id   = ID;
+        // Retrieve any other variables necessary.
+        $time = gmdate('c');
+        $pid  = getmypid();
+        $id   = ID;
 
-		// Create log line and append.
-		$this->log[] = "$time ($pid - $id) : $level [$callback] - $message";
-		return true;
-	}
+        // Create log line and append.
+        $this->log[] = "$time ($pid - $id) : $level [$callback] - $message";
+        return true;
+    }
 
-	/**
-	 * Takes the current internal log and exports it to a file before
-	 * emptying it.
-	 *
-	 * @param string $filename Name of the file to export the log to
-	 *
-	 * @return int|bool Returns the number of bytes written, or false on error
-	 */
-	public function export($filename) {
-		clearstatcache();
-		// Check the filename and return if already exists AND
-		// is not a normal file.
-		$filename = realpath($filename);
-		if(!file_exists($filename) || !is_file($filename)) {
-			throw new paError(paError::ERROR, 'MAIN_Logger::export', 'Log file is not a valid file.', $this);
-		} $file = fopen($filename, 'a');
+    /**
+     * Takes the current internal log and exports it to a file before
+     * emptying it.
+     *
+     * @param string $filename Name of the file to export the log to
+     *
+     * @return int|bool Returns the number of bytes written, or false on error
+     */
+    public function export($filename) {
+        clearstatcache();
+        // Check the filename and return if already exists AND
+        // is not a normal file.
+        $filename = realpath($filename);
+        if(!file_exists($filename) || !is_file($filename)) {
+            throw new paError(paError::ERROR, 'MAIN_Logger::export', 'Log file is not a valid file.', $this);
+        } $file = fopen($filename, 'a');
 
-		// Check if the file failed to open,
-		// then check if it is writable.
-		if($file === false) {
-			throw new paError(paError::ERROR, 'MAIN_Logger::export', 'Log file failed to open.', $this);
-		} elseif(!is_writable($filename)) {
-			fclose($file);
-			throw new paError(paError::ERROR, 'MAIN_Logger::export', 'Log file is not writeable.', $this);
-		}
+        // Check if the file failed to open,
+        // then check if it is writable.
+        if($file === false) {
+            throw new paError(paError::ERROR, 'MAIN_Logger::export', 'Log file failed to open.', $this);
+        } elseif(!is_writable($filename)) {
+            fclose($file);
+            throw new paError(paError::ERROR, 'MAIN_Logger::export', 'Log file is not writeable.', $this);
+        }
 
-		// Append the log to the file and close.
-		$lines  = implode("\n\n", $this->log) . "\n";
-		$retval = fwrite($file, $lines);
-		fclose($file);
+        // Append the log to the file and close.
+        $lines  = implode("\n\n", $this->log) . "\n";
+        $retval = fwrite($file, $lines);
+        fclose($file);
 
-		// Blank the internal log on success.
-		if($retval == strlen($lines)) {
-			$this->log = array();
-			return $retval;
-		} else {
-			throw new paError(paError::ERROR, 'MAIN_Logger::export', 'Writing to log file failed.', $this);
-		}
-	}
+        // Blank the internal log on success.
+        if($retval == strlen($lines)) {
+            $this->log = array();
+            return $retval;
+        } else {
+            throw new paError(paError::ERROR, 'MAIN_Logger::export', 'Writing to log file failed.', $this);
+        }
+    }
 }
 
 
@@ -182,96 +182,96 @@ class paLogger
  */
 class paError
 {
-	/**
-	 * Signal for extremely dangerous errors, usually
-	 * resulting in termination of the script.
-	 */
-	const ERROR    = 256;
+    /**
+     * Signal for extremely dangerous errors, usually
+     * resulting in termination of the script.
+     */
+    const ERROR    = 256;
 
-	/**
-	 * Signal for critical errors, creating unwanted results, though
-	 * not necessarily requiring the script to be terminated.
-	 */
-	const WARNING  = 512;
+    /**
+     * Signal for critical errors, creating unwanted results, though
+     * not necessarily requiring the script to be terminated.
+     */
+    const WARNING  = 512;
 
-	/**
-	 * Signal for standard errors that may have an effect on the outcome
-	 * of the script in certain situations.
-	 */
-	const NOTICE   = 1024;
+    /**
+     * Signal for standard errors that may have an effect on the outcome
+     * of the script in certain situations.
+     */
+    const NOTICE   = 1024;
 
-	/**
-	 * Level of the error.
-	 * @private
-	 */
-	private $level;
+    /**
+     * Level of the error.
+     * @private
+     */
+    private $level;
 
-	/**
-	 * Callback for the error.
-	 * @private
-	 */
-	private $callback;
+    /**
+     * Callback for the error.
+     * @private
+     */
+    private $callback;
 
-	/**
-	 * Error message.
-	 * @private
-	 */
-	private $message;
+    /**
+     * Error message.
+     * @private
+     */
+    private $message;
 
-	/**
-	 * Stores error information and logs the error.
-	 *
-	 * @param const   $level    One of the classes local constants defining error severity
-	 * @param string  $callback Name of the function creating the error
-	 * @param string  $message  Message describing the error
-	 * @param object &$log      Valid MAIN_Logger instance
-	 */
-	public function __construct($level, $callback, $message, &$log) {
+    /**
+     * Stores error information and logs the error.
+     *
+     * @param const   $level    One of the classes local constants defining error severity
+     * @param string  $callback Name of the function creating the error
+     * @param string  $message  Message describing the error
+     * @param object &$log      Valid MAIN_Logger instance
+     */
+    public function __construct($level, $callback, $message, &$log) {
         assert($log instanceof paLogger);
 
-		$this->level    =  $level;
-		$this->callback =  $callback;
-		$this->message  =  $message;
-		$this->log      =& $log;
+        $this->level    =  $level;
+        $this->callback =  $callback;
+        $this->message  =  $message;
+        $this->log      =& $log;
 
-		switch($level) {
-			case self::ERROR:
-			case self::WARNING:
-			case self::NOTICE:
-				break;
-			default:
-				return false;
-		}
+        switch($level) {
+            case self::ERROR:
+            case self::WARNING:
+            case self::NOTICE:
+                break;
+            default:
+                return false;
+        }
 
-		$log->log($level, $callback, $message);
-	}
+        $log->log($level, $callback, $message);
+    }
 
-	/**
-	 * Get the level severity.
-	 *
-	 * @return int Code referring to the level severity
-	 */
-	public function getLevel() {
-		return $this->code;
-	}
+    /**
+     * Get the level severity.
+     *
+     * @return int Code referring to the level severity
+     */
+    public function getLevel() {
+        return $this->code;
+    }
 
-	/**
-	 * Get the callback for the error.
-	 *
-	 * @return string Callback for the error
-	 */
-	public function getCallback() {
-		return $this->callback;
-	}
+    /**
+     * Get the callback for the error.
+     *
+     * @return string Callback for the error
+     */
+    public function getCallback() {
+        return $this->callback;
+    }
 
-	/**
-	 * Get the error message.
-	 *
-	 * @return string Error message
-	 */
-	public function getMessage() {
-		return $this->message;
-	}
+    /**
+     * Get the error message.
+     *
+     * @return string Error message
+     */
+    public function getMessage() {
+        return $this->message;
+    }
 }
 
 class paDatabaseError extends paError {}

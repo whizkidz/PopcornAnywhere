@@ -27,51 +27,51 @@ if(!defined("API")) { return false; }
 
 class paAutoloader
 {
-	private static $instance;
+    private static $instance;
 
-	private $rootdir;
-	private $loaded = array();
-	private $classlist = array(
-#			'paController' => '/app/main/Controller.php',
-			'paError'      => '/app/error.php',
-			'paLogger'     => '/app/error.php',
-			'paDatabase'     => '/app/db.php',
-			'paObject'       => '/app/db.php',
-			'paTable'        => '/app/db.php',
-			'paSession'     => '/app/session.php' );
+    private $rootdir;
+    private $loaded = array();
+    private $classlist = array(
+#            'paController' => '/app/main/Controller.php',
+            'paError'      => '/app/error.php',
+            'paLogger'     => '/app/error.php',
+            'paDatabase'     => '/app/db.php',
+            'paObject'       => '/app/db.php',
+            'paTable'        => '/app/db.php',
+            'paSession'     => '/app/session.php' );
 
-	private function __construct($rootdir) {
-		if(!is_dir($rootdir)) {
-			return false;
-		} $this->rootdir = $rootdir;
-	}
+    private function __construct($rootdir) {
+        if(!is_dir($rootdir)) {
+            return false;
+        } $this->rootdir = $rootdir;
+    }
 
-	public function loadClass($classname) {
-		if(!array_key_exists($classname, $this->classlist)) {
-			return false;
-		} elseif(array_key_exists($classname, $this->loaded)) {
-			return true;
-		} self::loadFile($this->rootdir . $this->classlist[$classname]);
-		$this->loaded[$classname] = true;
-		return true;
-	}
+    public function loadClass($classname) {
+        if(!array_key_exists($classname, $this->classlist)) {
+            return false;
+        } elseif(array_key_exists($classname, $this->loaded)) {
+            return true;
+        } self::loadFile($this->rootdir . $this->classlist[$classname]);
+        $this->loaded[$classname] = true;
+        return true;
+    }
 
-	public static function loadFile($filename) {
-		if(!file_exists($filename) ||
-		   !is_file(    $filename) ||
-		   !is_readable($filename) ) {
-			return false;
-		} require($filename);
-		return true;
-	}
+    public static function loadFile($filename) {
+        if(!file_exists($filename) ||
+           !is_file(    $filename) ||
+           !is_readable($filename) ) {
+            return false;
+        } require($filename);
+        return true;
+    }
 
-	public static function getInstance($rootdir = '') {
-		if(self::$instance instanceof self) {
-			return self::$instance;
-		} return self::$instance = new self($rootdir);
-	}
+    public static function getInstance($rootdir = '') {
+        if(self::$instance instanceof self) {
+            return self::$instance;
+        } return self::$instance = new self($rootdir);
+    }
 }
 
 function __autoload($classname) {
-	MAIN_Autoloader::getInstance()->loadClass($classname);
+    MAIN_Autoloader::getInstance()->loadClass($classname);
 }
